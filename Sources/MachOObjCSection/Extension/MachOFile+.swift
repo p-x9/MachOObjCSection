@@ -114,6 +114,14 @@ extension MachOFile {
 
         return nil
     }
+
+    func fileHandleAndOffset(
+        forResolvedValue resolved: ResolvedValue
+    ) -> (File, UInt64)? {
+        // ResolvedValue.offset follows fileHandleAndOffset(forOffset:)'s convention:
+        // Mach-O file offset for ordinary files, main-cache-start offset for dyld cache images.
+        fileHandleAndOffset(forOffset: resolved.offset)
+    }
 }
 
 // MARK: - rebase / bind

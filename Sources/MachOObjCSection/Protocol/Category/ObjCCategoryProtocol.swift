@@ -51,7 +51,7 @@ extension ObjCCategoryProtocol {
         let unresolved = unresolvedValue(of: .name)
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -326,7 +326,7 @@ extension ObjCCategoryProtocol {
 
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -356,7 +356,7 @@ extension ObjCCategoryProtocol {
 
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -408,7 +408,7 @@ extension ObjCCategoryProtocol {
 
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -441,7 +441,7 @@ extension ObjCCategoryProtocol {
 
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -476,7 +476,7 @@ extension ObjCCategoryProtocol {
 
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
