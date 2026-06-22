@@ -1,5 +1,8 @@
 .DS_Store
 /.build
+/Benchmarks/.benchmarkBaselines
+/Benchmarks/.build
+/Benchmarks/.swiftpm
 /Packages
 xcuserdata/
 DerivedData/
