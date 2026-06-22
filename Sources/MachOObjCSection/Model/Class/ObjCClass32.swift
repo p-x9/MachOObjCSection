@@ -101,7 +101,7 @@ extension ObjCClass32 {
         guard let _data = _classROData(in: machO) else {
             return 0
         }
-        return _data.isMetaClass ? 7 : 0
+        return version(for: _data)
     }
 
     public func version(in machO: MachOImage) -> Int32 {
@@ -112,7 +112,7 @@ extension ObjCClass32 {
         guard let _data = _classROData(in: machO) else {
             return 0
         }
-        return _data.isMetaClass ? 7 : 0
+        return version(for: _data)
     }
 }
 
