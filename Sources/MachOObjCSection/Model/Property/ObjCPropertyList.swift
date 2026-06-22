@@ -106,14 +106,14 @@ extension ObjCPropertyList {
                 }
                 .compactMap {
                     var name = ""
-                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: $0.name.address) {
+                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: $0.name) {
                         name = fileHandle.readString(
                             offset: fileOffset
                         ) ?? ""
                     }
 
                     var attributes = ""
-                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: $0.attributes.address) {
+                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: $0.attributes) {
                         attributes = fileHandle.readString(
                             offset: fileOffset
                         ) ?? ""
@@ -151,14 +151,14 @@ extension ObjCPropertyList {
                 }
                 .map {
                     var name = ""
-                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: $0.name.address) {
+                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: $0.name) {
                         name = fileHandle.readString(
                             offset: fileOffset
                         ) ?? ""
                     }
 
                     var attributes = ""
-                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: $0.attributes.address) {
+                    if let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: $0.attributes) {
                         attributes = fileHandle.readString(
                             offset: fileOffset
                         ) ?? ""

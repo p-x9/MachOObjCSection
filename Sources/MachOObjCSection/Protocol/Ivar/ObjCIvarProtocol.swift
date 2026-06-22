@@ -46,7 +46,7 @@ extension ObjCIvarProtocol {
         let unresolved = unresolvedValue(of: .offset)
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -62,7 +62,7 @@ extension ObjCIvarProtocol {
         let unresolved = unresolvedValue(of: .name)
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
@@ -77,7 +77,7 @@ extension ObjCIvarProtocol {
         let unresolved = unresolvedValue(of: .type)
         let resolved = machO.resolveRebase(unresolved)
 
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forAddress: resolved.address) else {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
             return nil
         }
 
