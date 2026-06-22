@@ -1,5 +1,5 @@
 {
-  "originHash" : "796bd2db0d3c5bfb114db54d7279b2e355214bd9e1edb34bddd37279cc4b6a01",
+  "originHash" : "47248b6d698478ade286b69ab46c2e626cfb0415d51adc2bc695add5c5cdce2a",
   "pins" : [
     {
       "identity" : "benchmark",
@@ -24,8 +24,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/p-x9/MachOKit.git",
       "state" : {
-        "revision" : "a17885f09c038957a7ec70cb3099f4a423af4c40",
-        "version" : "0.46.1"
+        "revision" : "62c42ed722166283a9e4b89cd2332710c501d034",
+        "version" : "0.51.0"
+      }
+    },
+    {
+      "identity" : "objectarchivekit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/p-x9/ObjectArchiveKit.git",
+      "state" : {
+        "revision" : "96d782a576273b73b277b577943a2a25b00b919e",
+        "version" : "0.5.0"
       }
     },
     {
@@ -47,6 +56,15 @@
       }
     },
     {
+      "identity" : "swift-asn1",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-asn1.git",
+      "state" : {
+        "revision" : "a9a5efd40eaf558a2bcd48d64b1d1646be686008",
+        "version" : "1.7.1"
+      }
+    },
+    {
       "identity" : "swift-atomics",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-atomics.git",
@@ -62,6 +80,15 @@
       "state" : {
         "revision" : "5fb96b503672ea4752eded6b4e301fd87214b03b",
         "version" : "0.2.1"
+      }
+    },
+    {
+      "identity" : "swift-crypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-crypto.git",
+      "state" : {
+        "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
+        "version" : "3.15.1"
       }
     },
     {
@@ -96,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/p-x9/swift-objc-dump.git",
       "state" : {
-        "revision" : "1e91dfd4c332f7015f4c46f99df8a53fbb495e20",
-        "version" : "0.7.0"
+        "revision" : "089b0dd03825c47c86abd80ea98c290309379911",
+        "version" : "0.8.0"
       }
     },
     {
