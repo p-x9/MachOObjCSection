@@ -65,6 +65,18 @@ extension RelativeListListProtocol {
                 list(in: machO, for: $0)
             }
     }
+
+    public func list(
+        in machO: MachOImage,
+        forImageIndex imageIndex: Int?
+    ) -> (MachOImage, List)? {
+        guard let imageIndex,
+              let entry = entries(in: machO).first(
+                where: { $0.imageIndex == imageIndex }
+              )
+        else { return nil }
+        return list(in: machO, for: entry)
+    }
 }
 
 extension RelativeListListProtocol {
