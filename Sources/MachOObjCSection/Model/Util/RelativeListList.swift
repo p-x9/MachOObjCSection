@@ -95,4 +95,16 @@ extension RelativeListListProtocol {
                 list(in: machO, for: $0)
             }
     }
+
+    public func list(
+        in machO: MachOFile,
+        forImageIndex imageIndex: Int?
+    ) -> (MachOFile, List)? {
+        guard let imageIndex,
+              let entry = entries(in: machO).first(
+                where: { $0.imageIndex == imageIndex }
+              )
+        else { return nil }
+        return list(in: machO, for: entry)
+    }
 }
