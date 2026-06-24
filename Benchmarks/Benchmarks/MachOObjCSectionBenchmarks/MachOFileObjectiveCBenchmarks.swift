@@ -103,6 +103,77 @@ func registerMachOFileObjectiveCBenchmarks() {
         blackHole(count)
     }
 
+    if BenchmarkFixtures.hasMachOImage {
+        Benchmark("MachOImage.objc.classes.enumerate") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+
+            benchmark.startMeasurement()
+
+            blackHole(objcClasses(in: machO))
+        }
+
+        Benchmark("MachOImage.objc.classInfo.first100") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+            let classes = objcClasses(in: machO)
+            let limit = BenchmarkFixtures.classInfoLimit()
+
+            benchmark.startMeasurement()
+
+            var count = 0
+            for cls in classes.prefix(limit) {
+                blackHoleClassInfo(for: cls, in: machO)
+                count += 1
+            }
+            blackHole(count)
+        }
+
+        Benchmark("MachOImage.objc.protocols.enumerate") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+
+            benchmark.startMeasurement()
+
+            blackHole(objcProtocols(in: machO))
+        }
+
+        Benchmark("MachOImage.objc.protocolInfo.first100") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+            let protocols = objcProtocols(in: machO)
+            let limit = BenchmarkFixtures.classInfoLimit()
+
+            benchmark.startMeasurement()
+
+            var count = 0
+            for proto in protocols.prefix(limit) {
+                blackHoleProtocolInfo(for: proto, in: machO)
+                count += 1
+            }
+            blackHole(count)
+        }
+
+        Benchmark("MachOImage.objc.categories.enumerate") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+
+            benchmark.startMeasurement()
+
+            blackHole(objcCategories(in: machO))
+        }
+
+        Benchmark("MachOImage.objc.categoryInfo.first100") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+            let categories = objcCategories(in: machO)
+            let limit = BenchmarkFixtures.classInfoLimit()
+
+            benchmark.startMeasurement()
+
+            var count = 0
+            for category in categories.prefix(limit) {
+                blackHoleCategoryInfo(for: category, in: machO)
+                count += 1
+            }
+            blackHole(count)
+        }
+    }
+
     guard BenchmarkFixtures.hasDyldCache else { return }
 
     Benchmark("DyldCache.MachOFile.objc.classes.enumerate") { benchmark in
@@ -230,6 +301,54 @@ private func blackHoleProtocolInfo(for proto: ObjCProtocol, in machO: MachOFile)
 }
 
 private func blackHoleCategoryInfo(for category: ObjCCategory, in machO: MachOFile) {
+    switch category {
+    case let .category64(category):
+        blackHole(category.info(in: machO))
+    case let .category32(category):
+        blackHole(category.info(in: machO))
+    }
+}
+
+private func objcClasses(in machO: MachOImage) -> [ObjCClass] {
+    if machO.is64Bit {
+        return (machO.objc.classes64 ?? []).map(ObjCClass.class64)
+    }
+    return (machO.objc.classes32 ?? []).map(ObjCClass.class32)
+}
+
+private func objcProtocols(in machO: MachOImage) -> [ObjCProtocol] {
+    if machO.is64Bit {
+        return (machO.objc.protocols64 ?? []).map(ObjCProtocol.protocol64)
+    }
+    return (machO.objc.protocols32 ?? []).map(ObjCProtocol.protocol32)
+}
+
+private func objcCategories(in machO: MachOImage) -> [ObjCCategory] {
+    if machO.is64Bit {
+        return (machO.objc.categories64 ?? []).map(ObjCCategory.category64)
+    }
+    return (machO.objc.categories32 ?? []).map(ObjCCategory.category32)
+}
+
+private func blackHoleClassInfo(for cls: ObjCClass, in machO: MachOImage) {
+    switch cls {
+    case let .class64(cls):
+        blackHole(cls.info(in: machO))
+    case let .class32(cls):
+        blackHole(cls.info(in: machO))
+    }
+}
+
+private func blackHoleProtocolInfo(for proto: ObjCProtocol, in machO: MachOImage) {
+    switch proto {
+    case let .protocol64(proto):
+        blackHole(proto.info(in: machO))
+    case let .protocol32(proto):
+        blackHole(proto.info(in: machO))
+    }
+}
+
+private func blackHoleCategoryInfo(for category: ObjCCategory, in machO: MachOImage) {
     switch category {
     case let .category64(category):
         blackHole(category.info(in: machO))
