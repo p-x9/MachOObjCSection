@@ -75,39 +75,33 @@ extension DyldCache {
     func locateValue<V>(
         _ resolver: (DyldCache) throws -> V?
     ) rethrows -> LocatedValue<V>? {
-        var visited: Set<UUID> = []
-
-        if let located = try _resolve(self, with: resolver, visited: &visited) {
-            return located
+        if let value = try resolver(self) {
+            return (self, value)
         }
 
         guard let mainCache else { return nil }
-        if let located = try _resolve(mainCache, with: resolver, visited: &visited) {
-            return located
+        let uuid = header.layout.uuid
+
+        if !isEqual(mainCache.header.layout.uuid, uuid),
+           let value = try resolver(mainCache) {
+            return (mainCache, value)
         }
 
         guard let subCaches = mainCache.subCaches else { return nil }
+        let fileName = url.lastPathComponent
         for entry in subCaches {
+            if fileName.hasSuffix(entry.fileSuffix) {
+                continue
+            }
+
             guard let subCache = try? entry.subcache(for: mainCache) else {
                 continue
             }
-            if let located = try _resolve(subCache, with: resolver, visited: &visited) {
-                return located
+            if let value = try resolver(subCache) {
+                return (subCache, value)
             }
         }
         return nil
-    }
-
-    @inline(__always)
-    private func _resolve<Value>(
-        _ cache: DyldCache,
-        with resolver: (DyldCache) throws -> Value?,
-        visited: inout Set<UUID>
-    ) rethrows -> LocatedValue<Value>? {
-        let uuid = cache.header.uuid
-        guard visited.insert(uuid).inserted else { return nil }
-        guard let value = try resolver(cache) else { return nil }
-        return (cache, value)
     }
 }
 
@@ -196,4 +190,24 @@ extension DyldCache {
         }
         return nil
     }
+}
+
+@inline(__always)
+private func isEqual(_ lhs: uuid_t, _ rhs: uuid_t) -> Bool {
+    lhs.0 == rhs.0 &&
+    lhs.1 == rhs.1 &&
+    lhs.2 == rhs.2 &&
+    lhs.3 == rhs.3 &&
+    lhs.4 == rhs.4 &&
+    lhs.5 == rhs.5 &&
+    lhs.6 == rhs.6 &&
+    lhs.7 == rhs.7 &&
+    lhs.8 == rhs.8 &&
+    lhs.9 == rhs.9 &&
+    lhs.10 == rhs.10 &&
+    lhs.11 == rhs.11 &&
+    lhs.12 == rhs.12 &&
+    lhs.13 == rhs.13 &&
+    lhs.14 == rhs.14 &&
+    lhs.15 == rhs.15
 }
