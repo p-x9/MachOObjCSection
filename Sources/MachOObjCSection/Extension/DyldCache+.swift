@@ -55,6 +55,7 @@ extension DyldCache {
     ///
     /// - Parameter keyPath: A keyPath returning an optional value.
     /// - Returns: A tuple of `(cache, value)` if resolved, or `nil` if not found.
+    @inline(__always)
     func locateValue<V>(
         _ keyPath: KeyPath<DyldCache, V?>
     ) -> LocatedValue<V>? {
@@ -70,26 +71,43 @@ extension DyldCache {
     ///
     /// - Parameter resolver: A closure returning an optional value for a given DyldCache.
     /// - Returns: A tuple of `(cache, value)` if resolution is successful; otherwise `nil`.
+    @inline(__always)
     func locateValue<V>(
-        _ resolver: (DyldCache) -> V?
-    ) -> LocatedValue<V>? {
-        if let value = resolver(self) { return (self, value) }
+        _ resolver: (DyldCache) throws -> V?
+    ) rethrows -> LocatedValue<V>? {
+        var visited: Set<UUID> = []
+
+        if let located = try _resolve(self, with: resolver, visited: &visited) {
+            return located
+        }
 
         guard let mainCache else { return nil }
-        if let value = resolver(mainCache) { return (mainCache, value) }
-
-        guard let subCaches = mainCache.subCaches else {
-            return nil
+        if let located = try _resolve(mainCache, with: resolver, visited: &visited) {
+            return located
         }
-        for subCache in subCaches {
-            guard let cache = try? subCache.subcache(for: mainCache) else {
+
+        guard let subCaches = mainCache.subCaches else { return nil }
+        for entry in subCaches {
+            guard let subCache = try? entry.subcache(for: mainCache) else {
                 continue
             }
-            if let value = resolver(cache) {
-                return (cache, value)
+            if let located = try _resolve(subCache, with: resolver, visited: &visited) {
+                return located
             }
         }
         return nil
+    }
+
+    @inline(__always)
+    private func _resolve<Value>(
+        _ cache: DyldCache,
+        with resolver: (DyldCache) throws -> Value?,
+        visited: inout Set<UUID>
+    ) rethrows -> LocatedValue<Value>? {
+        let uuid = cache.header.uuid
+        guard visited.insert(uuid).inserted else { return nil }
+        guard let value = try resolver(cache) else { return nil }
+        return (cache, value)
     }
 }
 
