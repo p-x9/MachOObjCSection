@@ -55,6 +55,7 @@ extension DyldCache {
     ///
     /// - Parameter keyPath: A keyPath returning an optional value.
     /// - Returns: A tuple of `(cache, value)` if resolved, or `nil` if not found.
+    @inline(__always)
     func locateValue<V>(
         _ keyPath: KeyPath<DyldCache, V?>
     ) -> LocatedValue<V>? {
@@ -70,23 +71,34 @@ extension DyldCache {
     ///
     /// - Parameter resolver: A closure returning an optional value for a given DyldCache.
     /// - Returns: A tuple of `(cache, value)` if resolution is successful; otherwise `nil`.
+    @inline(__always)
     func locateValue<V>(
-        _ resolver: (DyldCache) -> V?
-    ) -> LocatedValue<V>? {
-        if let value = resolver(self) { return (self, value) }
+        _ resolver: (DyldCache) throws -> V?
+    ) rethrows -> LocatedValue<V>? {
+        if let value = try resolver(self) {
+            return (self, value)
+        }
 
         guard let mainCache else { return nil }
-        if let value = resolver(mainCache) { return (mainCache, value) }
+        let uuid = header.layout.uuid
 
-        guard let subCaches = mainCache.subCaches else {
-            return nil
+        if !isEqual(mainCache.header.layout.uuid, uuid),
+           let value = try resolver(mainCache) {
+            return (mainCache, value)
         }
-        for subCache in subCaches {
-            guard let cache = try? subCache.subcache(for: mainCache) else {
+
+        guard let subCaches = mainCache.subCaches else { return nil }
+        let fileName = url.lastPathComponent
+        for entry in subCaches {
+            if fileName.hasSuffix(entry.fileSuffix) {
                 continue
             }
-            if let value = resolver(cache) {
-                return (cache, value)
+
+            guard let subCache = try? entry.subcache(for: mainCache) else {
+                continue
+            }
+            if let value = try resolver(subCache) {
+                return (subCache, value)
             }
         }
         return nil
@@ -178,4 +190,24 @@ extension DyldCache {
         }
         return nil
     }
+}
+
+@inline(__always)
+private func isEqual(_ lhs: uuid_t, _ rhs: uuid_t) -> Bool {
+    lhs.0 == rhs.0 &&
+    lhs.1 == rhs.1 &&
+    lhs.2 == rhs.2 &&
+    lhs.3 == rhs.3 &&
+    lhs.4 == rhs.4 &&
+    lhs.5 == rhs.5 &&
+    lhs.6 == rhs.6 &&
+    lhs.7 == rhs.7 &&
+    lhs.8 == rhs.8 &&
+    lhs.9 == rhs.9 &&
+    lhs.10 == rhs.10 &&
+    lhs.11 == rhs.11 &&
+    lhs.12 == rhs.12 &&
+    lhs.13 == rhs.13 &&
+    lhs.14 == rhs.14 &&
+    lhs.15 == rhs.15
 }
