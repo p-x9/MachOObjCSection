@@ -67,6 +67,5 @@ extension MachOImage {
         }
 #endif
         return nil
-
     }
 }
