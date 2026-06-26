@@ -198,8 +198,27 @@ extension ObjCClassProtocol {
         }
         let imagePath = machO.imagePath
 
+        // Cache `objcImageIndex` lookups so a class with multiple relative
+        // list lists (protocol + property + method) only pays the dyld cache
+        // header walk once. Classes with no relative list list never enter
+        // these closures, so the lookup is skipped entirely.
+        var _imageIndex: Int??
+        var _targetMachOImageIndex: Int??
+        func imageIndex() -> Int? {
+            if let v = _imageIndex { return v }
+            let v = machO.objcImageIndex
+            _imageIndex = .some(v)
+            return v
+        }
+        func targetMachOImageIndex() -> Int? {
+            if let v = _targetMachOImageIndex { return v }
+            let v = targetMachO.objcImageIndex
+            _targetMachOImageIndex = .some(v)
+            return v
+        }
+
         let protocols = data
-            .resolvedProtocolList(in: machO, imageIndex: machO.objcImageIndex)
+            .resolvedProtocolList(in: machO, imageIndex: imageIndex())
             .flatMap { (m, list) in list.protocols(in: m) }?
             .compactMap { $1.info(in: $0) } ?? []
 
@@ -210,23 +229,23 @@ extension ObjCClassProtocol {
 
         // Instance
         let properties = data
-            .resolvedPropertyList(in: machO, imageIndex: machO.objcImageIndex)
+            .resolvedPropertyList(in: machO, imageIndex: imageIndex())
             .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: false) } ?? []
 
         let methods = data
-            .resolvedMethodList(in: machO, imageIndex: machO.objcImageIndex)
+            .resolvedMethodList(in: machO, imageIndex: imageIndex())
             .flatMap { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: false) } ?? []
 
         // Meta
         let classProperties = metaData
-            .resolvedPropertyList(in: targetMachO, imageIndex: targetMachO.objcImageIndex)
+            .resolvedPropertyList(in: targetMachO, imageIndex: targetMachOImageIndex())
             .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: true) } ?? []
 
         let classMethods = metaData
-            .resolvedMethodList(in: targetMachO, imageIndex: targetMachO.objcImageIndex)
+            .resolvedMethodList(in: targetMachO, imageIndex: targetMachOImageIndex())
             .flatMap { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: true) } ?? []
 
@@ -289,8 +308,24 @@ extension ObjCClassProtocol {
             return nil
         }
 
+        // See `info(in: MachOFile)` for why these are cached locally.
+        var _imageIndex: Int??
+        var _targetMachOImageIndex: Int??
+        func imageIndex() -> Int? {
+            if let v = _imageIndex { return v }
+            let v = machO.objcImageIndex
+            _imageIndex = .some(v)
+            return v
+        }
+        func targetMachOImageIndex() -> Int? {
+            if let v = _targetMachOImageIndex { return v }
+            let v = targetMachO.objcImageIndex
+            _targetMachOImageIndex = .some(v)
+            return v
+        }
+
         let protocols = data
-            .resolvedProtocolList(in: machO, imageIndex: machO.objcImageIndex)
+            .resolvedProtocolList(in: machO, imageIndex: imageIndex())
             .flatMap { (m, list) in list.protocols(in: m) }?
             .compactMap { $1.info(in: $0) } ?? []
 
@@ -301,23 +336,23 @@ extension ObjCClassProtocol {
 
         // Instance
         let properties = data
-            .resolvedPropertyList(in: machO, imageIndex: machO.objcImageIndex)
+            .resolvedPropertyList(in: machO, imageIndex: imageIndex())
             .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: false) } ?? []
 
         let methods = data
-            .resolvedMethodList(in: machO, imageIndex: machO.objcImageIndex)
+            .resolvedMethodList(in: machO, imageIndex: imageIndex())
             .map { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: false) } ?? []
 
         // Meta
         let classProperties = metaData
-            .resolvedPropertyList(in: targetMachO, imageIndex: targetMachO.objcImageIndex)
+            .resolvedPropertyList(in: targetMachO, imageIndex: targetMachOImageIndex())
             .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: true) } ?? []
 
         let classMethods = metaData
-            .resolvedMethodList(in: targetMachO, imageIndex: targetMachO.objcImageIndex)
+            .resolvedMethodList(in: targetMachO, imageIndex: targetMachOImageIndex())
             .map { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: true) } ?? []
 
