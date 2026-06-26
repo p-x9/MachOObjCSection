@@ -76,7 +76,7 @@ extension ObjCClass64 {
         if !hasRWPointer(in: machO) { return nil }
 
         let FAST_DATA_MASK: UInt
-        if machO.isPhysicalIPhone && !machO.isSimulatorIPhone {
+        if machO.isPhysicalIPhone {
             FAST_DATA_MASK = numericCast(FAST_DATA_MASK_64_IPHONE)
         } else {
             FAST_DATA_MASK = numericCast(FAST_DATA_MASK_64)
@@ -124,7 +124,7 @@ extension ObjCClass64 {
 extension ObjCClass64 {
     private func _classROData(in machO: MachOImage) -> ClassROData? {
         let FAST_DATA_MASK: UInt
-        if machO.isPhysicalIPhone && !machO.isSimulatorIPhone {
+        if machO.isPhysicalIPhone {
             FAST_DATA_MASK = numericCast(FAST_DATA_MASK_64_IPHONE)
         } else {
             FAST_DATA_MASK = numericCast(FAST_DATA_MASK_64)
@@ -149,7 +149,7 @@ extension ObjCClass64 {
 
     private func _classROData(in machO: MachOFile) -> ClassROData? {
         let FAST_DATA_MASK: UInt64
-        if machO.isPhysicalIPhone && !machO.isSimulatorIPhone {
+        if machO.isPhysicalIPhone {
             FAST_DATA_MASK = numericCast(FAST_DATA_MASK_64_IPHONE)
         } else {
             FAST_DATA_MASK = numericCast(FAST_DATA_MASK_64)
