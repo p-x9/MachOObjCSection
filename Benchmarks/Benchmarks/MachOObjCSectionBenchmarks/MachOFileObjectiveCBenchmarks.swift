@@ -27,6 +27,38 @@ func registerMachOFileObjectiveCBenchmarks() {
         blackHole(count)
     }
 
+    Benchmark("MachOFile.objc.classInfo.withMethodRelativeList.first100") { benchmark in
+        let machO = BenchmarkFixtures.machOFile()
+        let classes = objcClasses(in: machO)
+            .filter { hasMethodRelativeListList($0, in: machO) }
+        let limit = BenchmarkFixtures.classInfoLimit()
+
+        benchmark.startMeasurement()
+
+        var count = 0
+        for cls in classes.prefix(limit) {
+            blackHoleClassInfo(for: cls, in: machO)
+            count += 1
+        }
+        blackHole(count)
+    }
+
+    Benchmark("MachOFile.objc.classInfo.withoutMethodRelativeList.first100") { benchmark in
+        let machO = BenchmarkFixtures.machOFile()
+        let classes = objcClasses(in: machO)
+            .filter { !hasMethodRelativeListList($0, in: machO) }
+        let limit = BenchmarkFixtures.classInfoLimit()
+
+        benchmark.startMeasurement()
+
+        var count = 0
+        for cls in classes.prefix(limit) {
+            blackHoleClassInfo(for: cls, in: machO)
+            count += 1
+        }
+        blackHole(count)
+    }
+
     Benchmark("MachOFile.objc.protocols.enumerate") { benchmark in
         let machO = BenchmarkFixtures.machOFile()
 
@@ -127,6 +159,38 @@ func registerMachOFileObjectiveCBenchmarks() {
             blackHole(count)
         }
 
+        Benchmark("MachOImage.objc.classInfo.withMethodRelativeList.first100") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+            let classes = objcClasses(in: machO)
+                .filter { hasMethodRelativeListList($0, in: machO) }
+            let limit = BenchmarkFixtures.classInfoLimit()
+
+            benchmark.startMeasurement()
+
+            var count = 0
+            for cls in classes.prefix(limit) {
+                blackHoleClassInfo(for: cls, in: machO)
+                count += 1
+            }
+            blackHole(count)
+        }
+
+        Benchmark("MachOImage.objc.classInfo.withoutMethodRelativeList.first100") { benchmark in
+            guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
+            let classes = objcClasses(in: machO)
+                .filter { !hasMethodRelativeListList($0, in: machO) }
+            let limit = BenchmarkFixtures.classInfoLimit()
+
+            benchmark.startMeasurement()
+
+            var count = 0
+            for cls in classes.prefix(limit) {
+                blackHoleClassInfo(for: cls, in: machO)
+                count += 1
+            }
+            blackHole(count)
+        }
+
         Benchmark("MachOImage.objc.protocols.enumerate") { benchmark in
             guard let machO = BenchmarkFixtures.machOImage(benchmark: benchmark) else { return }
 
@@ -187,6 +251,38 @@ func registerMachOFileObjectiveCBenchmarks() {
     Benchmark("DyldCache.MachOFile.objc.classInfo.first100") { benchmark in
         guard let machO = BenchmarkFixtures.cacheMachOFile(benchmark: benchmark) else { return }
         let classes = objcClasses(in: machO)
+        let limit = BenchmarkFixtures.classInfoLimit()
+
+        benchmark.startMeasurement()
+
+        var count = 0
+        for cls in classes.prefix(limit) {
+            blackHoleClassInfo(for: cls, in: machO)
+            count += 1
+        }
+        blackHole(count)
+    }
+
+    Benchmark("DyldCache.MachOFile.objc.classInfo.withMethodRelativeList.first100") { benchmark in
+        guard let machO = BenchmarkFixtures.cacheMachOFile(benchmark: benchmark) else { return }
+        let classes = objcClasses(in: machO)
+            .filter { hasMethodRelativeListList($0, in: machO) }
+        let limit = BenchmarkFixtures.classInfoLimit()
+
+        benchmark.startMeasurement()
+
+        var count = 0
+        for cls in classes.prefix(limit) {
+            blackHoleClassInfo(for: cls, in: machO)
+            count += 1
+        }
+        blackHole(count)
+    }
+
+    Benchmark("DyldCache.MachOFile.objc.classInfo.withoutMethodRelativeList.first100") { benchmark in
+        guard let machO = BenchmarkFixtures.cacheMachOFile(benchmark: benchmark) else { return }
+        let classes = objcClasses(in: machO)
+            .filter { !hasMethodRelativeListList($0, in: machO) }
         let limit = BenchmarkFixtures.classInfoLimit()
 
         benchmark.startMeasurement()
@@ -354,5 +450,27 @@ private func blackHoleCategoryInfo(for category: ObjCCategory, in machO: MachOIm
         blackHole(category.info(in: machO))
     case let .category32(category):
         blackHole(category.info(in: machO))
+    }
+}
+
+private func hasMethodRelativeListList(_ cls: ObjCClass, in machO: MachOFile) -> Bool {
+    switch cls {
+    case let .class64(cls):
+        guard let data = cls.classROData(in: machO) else { return false }
+        return data.methodRelativeListList(in: machO) != nil
+    case let .class32(cls):
+        guard let data = cls.classROData(in: machO) else { return false }
+        return data.methodRelativeListList(in: machO) != nil
+    }
+}
+
+private func hasMethodRelativeListList(_ cls: ObjCClass, in machO: MachOImage) -> Bool {
+    switch cls {
+    case let .class64(cls):
+        guard let data = cls.classROData(in: machO) else { return false }
+        return data.methodRelativeListList(in: machO) != nil
+    case let .class32(cls):
+        guard let data = cls.classROData(in: machO) else { return false }
+        return data.methodRelativeListList(in: machO) != nil
     }
 }
