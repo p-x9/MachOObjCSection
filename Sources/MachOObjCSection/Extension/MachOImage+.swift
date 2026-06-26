@@ -51,3 +51,21 @@ extension MachOImage {
         return nil
     }
 }
+
+extension MachOImage {
+    var objcImageIndex: Int? {
+#if canImport(MachO)
+        guard header.isInDyldCache else { return nil }
+        guard let cache = DyldCacheLoaded.current else { return nil }
+        if let headerOptimizationRO = cache.headerOptimizationRO64,
+           let info = headerOptimizationRO.headerInfo(in: cache, for: self) {
+            return info.index
+        }
+        if let headerOptimizationRO = cache.headerOptimizationRO32,
+           let info = headerOptimizationRO.headerInfo(in: cache, for: self) {
+            return info.index
+        }
+#endif
+        return nil
+    }
+}

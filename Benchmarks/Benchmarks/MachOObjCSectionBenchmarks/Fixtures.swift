@@ -33,6 +33,24 @@ enum BenchmarkFixtures {
         ProcessInfo.processInfo.environment["MACHO_OBJC_SECTION_BENCH_CACHE_IMAGE"] ?? "/Foundation"
     }
 
+    static var machOImageName: String {
+        ProcessInfo.processInfo.environment["MACHO_OBJC_SECTION_BENCH_MACHO_IMAGE"] ?? "Foundation"
+    }
+
+    #if canImport(Darwin)
+    static let hasMachOImage = true
+    #else
+    static let hasMachOImage = false
+    #endif
+
+    static func machOImage(benchmark: Benchmark) -> MachOImage? {
+        guard let image = MachOImage(name: machOImageName) else {
+            benchmark.error("Failed to load MachOImage named \(machOImageName).")
+            return nil
+        }
+        return image
+    }
+
     static var hasDyldCache: Bool {
         #if canImport(Darwin)
         true

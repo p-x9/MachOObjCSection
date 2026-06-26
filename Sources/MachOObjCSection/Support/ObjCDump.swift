@@ -198,18 +198,29 @@ extension ObjCClassProtocol {
         }
         let imagePath = machO.imagePath
 
-        let protocolList = data.protocolList(in: machO)
-        var protocols = protocolList?
-            .protocols(in: machO)?
-            .compactMap { $1.info(in: $0) } ?? []
-        if let relative = data.protocolRelativeListList(in: machO) {
-            protocols = relative.lists(in: machO)
-                .filter { $0.0.imagePath == imagePath }
-                .flatMap { machO, list in
-                    list.protocols(in: machO)?
-                        .compactMap { $1.info(in: $0) } ?? []
-                }
+        // Cache `objcImageIndex` lookups so a class with multiple relative
+        // list lists (protocol + property + method) only pays the dyld cache
+        // header walk once. Classes with no relative list list never enter
+        // these closures, so the lookup is skipped entirely.
+        var _imageIndex: Int??
+        var _targetMachOImageIndex: Int??
+        func imageIndex() -> Int? {
+            if let v = _imageIndex { return v }
+            let v = machO.objcImageIndex
+            _imageIndex = .some(v)
+            return v
         }
+        func targetMachOImageIndex() -> Int? {
+            if let v = _targetMachOImageIndex { return v }
+            let v = targetMachO.objcImageIndex
+            _targetMachOImageIndex = .some(v)
+            return v
+        }
+
+        let protocols = data
+            .resolvedProtocolList(in: machO, imageIndex: imageIndex())
+            .flatMap { (m, list) in list.protocols(in: m) }?
+            .compactMap { $1.info(in: $0) } ?? []
 
         let ivarList = data.ivarList(in: machO)
         let ivars = ivarList?
@@ -217,60 +228,26 @@ extension ObjCClassProtocol {
             .compactMap { $0.info(in: machO) } ?? []
 
         // Instance
-        let propertiesList = data.propertyList(in: machO)
-        var properties = propertiesList?
-            .properties(in: machO)
+        let properties = data
+            .resolvedPropertyList(in: machO, imageIndex: imageIndex())
+            .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: false) } ?? []
-        if let relative = data.propertyRelativeListList(in: machO) {
-            properties = relative.lists(in: machO)
-                .filter { $0.0.imagePath == imagePath }
-                .flatMap { machO, list in
-                    list.properties(in: machO)
-                        .compactMap { $0.info(isClassProperty: false) }
-                }
-        }
 
-        let methodsList = data.methodList(in: machO)
-        var methods = methodsList?
-            .methods(in: machO)?
+        let methods = data
+            .resolvedMethodList(in: machO, imageIndex: imageIndex())
+            .flatMap { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: false) } ?? []
-        if let relative = data.methodRelativeListList(in: machO) {
-            methods = relative.lists(in: machO)
-                .filter { $0.0.imagePath == imagePath }
-                .flatMap { machO, list in
-                    list.methods(in: machO)?
-                        .compactMap { $0.info(isClassMethod: false) } ?? []
-                }
-        }
 
         // Meta
-        let classPropertiesList = metaData.propertyList(in: targetMachO)
-        var classProperties = classPropertiesList?
-            .properties(in: targetMachO)
+        let classProperties = metaData
+            .resolvedPropertyList(in: targetMachO, imageIndex: targetMachOImageIndex())
+            .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: true) } ?? []
-        if let relative = metaData.propertyRelativeListList(in: targetMachO) {
-            let targetImagePath = targetMachO.imagePath
-            classProperties = relative.lists(in: targetMachO)
-                .filter { $0.0.imagePath == targetImagePath }
-                .flatMap { machO, list in
-                    list.properties(in: machO)
-                        .compactMap { $0.info(isClassProperty: true) }
-                }
-        }
 
-        let classMethodsList = metaData.methodList(in: targetMachO)
-        var classMethods = classMethodsList?
-            .methods(in: targetMachO)?
+        let classMethods = metaData
+            .resolvedMethodList(in: targetMachO, imageIndex: targetMachOImageIndex())
+            .flatMap { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: true) } ?? []
-        if let relative = metaData.methodRelativeListList(in: targetMachO) {
-            let targetImagePath = targetMachO.imagePath
-            classMethods = relative.lists(in: targetMachO)
-                .filter { $0.0.imagePath == targetImagePath }
-                .flatMap { machO, list in
-                    list.methods(in: machO)?
-                        .compactMap { $0.info(isClassMethod: true) } ?? []
-                }
-        }
 
         let superClassName = superClassName(in: machO)
 
@@ -331,18 +308,26 @@ extension ObjCClassProtocol {
             return nil
         }
 
-        let protocolList = data.protocolList(in: machO)
-        var protocols = protocolList?
-            .protocols(in: machO)?
-            .compactMap { $1.info(in: $0) } ?? []
-        if let relative = data.protocolRelativeListList(in: machO) {
-            protocols = relative.lists(in: machO)
-                .filter({ $0.0.ptr == machO.ptr })
-                .flatMap { machO, list in
-                    list.protocols(in: machO)?
-                        .compactMap { $1.info(in: $0) } ?? []
-                }
+        // See `info(in: MachOFile)` for why these are cached locally.
+        var _imageIndex: Int??
+        var _targetMachOImageIndex: Int??
+        func imageIndex() -> Int? {
+            if let v = _imageIndex { return v }
+            let v = machO.objcImageIndex
+            _imageIndex = .some(v)
+            return v
         }
+        func targetMachOImageIndex() -> Int? {
+            if let v = _targetMachOImageIndex { return v }
+            let v = targetMachO.objcImageIndex
+            _targetMachOImageIndex = .some(v)
+            return v
+        }
+
+        let protocols = data
+            .resolvedProtocolList(in: machO, imageIndex: imageIndex())
+            .flatMap { (m, list) in list.protocols(in: m) }?
+            .compactMap { $1.info(in: $0) } ?? []
 
         let ivarList = data.ivarList(in: machO)
         let ivars = ivarList?
@@ -350,58 +335,26 @@ extension ObjCClassProtocol {
             .compactMap { $0.info(in: machO) } ?? []
 
         // Instance
-        let propertiesList = data.propertyList(in: machO)
-        var properties = propertiesList?
-            .properties(in: machO)
+        let properties = data
+            .resolvedPropertyList(in: machO, imageIndex: imageIndex())
+            .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: false) } ?? []
-        if let relative = data.propertyRelativeListList(in: machO) {
-            properties = relative.lists(in: machO)
-                .filter({ $0.0.ptr == machO.ptr })
-                .flatMap { machO, list in
-                    list.properties(in: machO)
-                        .compactMap { $0.info(isClassProperty: false) }
-                }
-        }
 
-        let methodsList = data.methodList(in: machO)
-        var methods = methodsList?
-            .methods(in: machO)
+        let methods = data
+            .resolvedMethodList(in: machO, imageIndex: imageIndex())
+            .map { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: false) } ?? []
-        if let relative = data.methodRelativeListList(in: machO) {
-            methods = relative.lists(in: machO)
-                .filter({ $0.0.ptr == machO.ptr })
-                .flatMap { machO, list in
-                    list.methods(in: machO)
-                        .compactMap { $0.info(isClassMethod: false) }
-                }
-        }
 
         // Meta
-        let classPropertiesList = metaData.propertyList(in: targetMachO)
-        var classProperties = classPropertiesList?
-            .properties(in: targetMachO)
+        let classProperties = metaData
+            .resolvedPropertyList(in: targetMachO, imageIndex: targetMachOImageIndex())
+            .map { (m, list) in list.properties(in: m) }?
             .compactMap { $0.info(isClassProperty: true) } ?? []
-        if let relative = metaData.propertyRelativeListList(in: targetMachO) {
-            classProperties = relative.lists(in: targetMachO)
-                .filter { $0.0.ptr == targetMachO.ptr }
-                .flatMap { machO, list in
-                    list.properties(in: machO)
-                        .compactMap { $0.info(isClassProperty: true) }
-                }
-        }
 
-        let classMethodsList = metaData.methodList(in: targetMachO)
-        var classMethods = classMethodsList?
-            .methods(in: targetMachO)
+        let classMethods = metaData
+            .resolvedMethodList(in: targetMachO, imageIndex: targetMachOImageIndex())
+            .map { (m, list) in list.methods(in: m) }?
             .compactMap { $0.info(isClassMethod: true) } ?? []
-        if let relative = metaData.methodRelativeListList(in: targetMachO) {
-            classMethods = relative.lists(in: targetMachO)
-                .filter({ $0.0.ptr == targetMachO.ptr })
-                .flatMap { machO, list in
-                    list.methods(in: machO)
-                        .compactMap { $0.info(isClassMethod: true) }
-                }
-        }
 
         let superClassName = superClassName(in: machO)
 
@@ -509,5 +462,80 @@ extension ObjCCategoryProtocol {
             classMethods: classMethods,
             methods: methods
         )
+    }
+}
+
+// MARK: - Relative list resolution
+
+// Note:
+// When a relative list list exists for a given list kind, the corresponding
+// regular list is guaranteed to be nil. The helpers below therefore consult
+// the relative list list first and only fall back to the regular list when
+// no relative list list is present.
+fileprivate extension ObjCClassRODataProtocol {
+    func resolvedMethodList(
+        in machO: MachOFile,
+        imageIndex: @autoclosure () -> Int?
+    ) -> (MachOFile, ObjCMethodList)? {
+        if let relative = methodRelativeListList(in: machO),
+           let resolved = relative.list(in: machO, forImageIndex: imageIndex()) {
+            return resolved
+        }
+        return methodList(in: machO).map { (machO, $0) }
+    }
+
+    func resolvedPropertyList(
+        in machO: MachOFile,
+        imageIndex: @autoclosure () -> Int?
+    ) -> (MachOFile, ObjCPropertyList)? {
+        if let relative = propertyRelativeListList(in: machO),
+           let resolved = relative.list(in: machO, forImageIndex: imageIndex()) {
+            return resolved
+        }
+        return propertyList(in: machO).map { (machO, $0) }
+    }
+
+    func resolvedProtocolList(
+        in machO: MachOFile,
+        imageIndex: @autoclosure () -> Int?
+    ) -> (MachOFile, ObjCProtocolList)? {
+        if let relative = protocolRelativeListList(in: machO),
+           let resolved = relative.list(in: machO, forImageIndex: imageIndex()) {
+            return resolved
+        }
+        return protocolList(in: machO).map { (machO, $0) }
+    }
+
+    func resolvedMethodList(
+        in machO: MachOImage,
+        imageIndex: @autoclosure () -> Int?
+    ) -> (MachOImage, ObjCMethodList)? {
+        if let relative = methodRelativeListList(in: machO),
+           let resolved = relative.list(in: machO, forImageIndex: imageIndex()) {
+            return resolved
+        }
+        return methodList(in: machO).map { (machO, $0) }
+    }
+
+    func resolvedPropertyList(
+        in machO: MachOImage,
+        imageIndex: @autoclosure () -> Int?
+    ) -> (MachOImage, ObjCPropertyList)? {
+        if let relative = propertyRelativeListList(in: machO),
+           let resolved = relative.list(in: machO, forImageIndex: imageIndex()) {
+            return resolved
+        }
+        return propertyList(in: machO).map { (machO, $0) }
+    }
+
+    func resolvedProtocolList(
+        in machO: MachOImage,
+        imageIndex: @autoclosure () -> Int?
+    ) -> (MachOImage, ObjCProtocolList)? {
+        if let relative = protocolRelativeListList(in: machO),
+           let resolved = relative.list(in: machO, forImageIndex: imageIndex()) {
+            return resolved
+        }
+        return protocolList(in: machO).map { (machO, $0) }
     }
 }

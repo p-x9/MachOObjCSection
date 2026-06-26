@@ -39,24 +39,32 @@ extension RelativeListListProtocol {
 }
 
 extension RelativeListListProtocol {
+    private func _entry(layout: Entry.Layout, at index: Int) -> Entry {
+        let baseOffset = offset + MemoryLayout<Header>.size
+        let entrySize = MemoryLayout<Entry.Layout>.size
+        return .init(
+            offset: baseOffset + entrySize * index,
+            layout: layout
+        )
+    }
+}
+
+extension RelativeListListProtocol {
     public func entries(in machO: MachOImage) -> [Entry] {
+        _entries(in: machO).enumerated()
+            .map { i, layout in
+                _entry(layout: layout, at: i)
+            }
+    }
+
+    private func _entries(in machO: MachOImage) -> MemorySequence<Entry.Layout> {
         let ptr = machO.ptr.advanced(by: offset)
-        let sequence = MemorySequence(
+        return .init(
             basePointer: ptr
                 .advanced(by: MemoryLayout<Header>.size)
                 .assumingMemoryBound(to: Entry.Layout.self),
             numberOfElements: numericCast(header.count)
         )
-
-        let baseOffset = offset + MemoryLayout<Header>.size
-        let entrySize = MemoryLayout<Entry.Layout>.size
-        return sequence.enumerated()
-            .map { i, layout in
-                Entry(
-                    offset: baseOffset + entrySize * i,
-                    layout: layout
-                )
-            }
     }
 
     public func lists(in machO: MachOImage) -> [(MachOImage, List)] {
@@ -65,28 +73,42 @@ extension RelativeListListProtocol {
                 list(in: machO, for: $0)
             }
     }
+
+    public func list(
+        in machO: MachOImage,
+        forImageIndex imageIndex: Int?
+    ) -> (MachOImage, List)? {
+        guard let imageIndex else { return nil }
+        let _entries = _entries(in: machO)
+        guard let (index, layout) = _entries.enumerated().first(
+            where: { _, layout in layout.imageIndex == imageIndex }
+        ) else { return nil }
+        return list(in: machO, for: _entry(layout: layout, at: index))
+    }
 }
 
 extension RelativeListListProtocol {
     public func entries(in machO: MachOFile) -> [Entry] {
-        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forOffset: numericCast(offset)) else {
+        guard let sequence = _entries(in: machO) else {
             return []
         }
+        return sequence.enumerated()
+            .map { i, layout in
+                _entry(layout: layout, at: i)
+            }
+    }
 
-        let sequence: DataSequence<Entry.Layout> = fileHandle.readDataSequence(
+    private func _entries(in machO: MachOFile) -> DataSequence<Entry.Layout>? {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(
+            forOffset: numericCast(offset)
+        ) else {
+            return nil
+        }
+
+        return fileHandle.readDataSequence(
             offset: fileOffset + numericCast(MemoryLayout<Header>.size),
             numberOfElements: numericCast(header.count)
         )
-
-        let baseOffset = offset + MemoryLayout<Header>.size
-        let entrySize = MemoryLayout<Entry.Layout>.size
-        return sequence.enumerated()
-            .map { i, layout in
-                Entry(
-                    offset: baseOffset + entrySize * i,
-                    layout: layout
-                )
-            }
     }
 
     public func lists(in machO: MachOFile) -> [(MachOFile, List)] {
@@ -94,5 +116,19 @@ extension RelativeListListProtocol {
             .compactMap {
                 list(in: machO, for: $0)
             }
+    }
+
+    public func list(
+        in machO: MachOFile,
+        forImageIndex imageIndex: Int?
+    ) -> (MachOFile, List)? {
+        guard let imageIndex,
+              let _entries = _entries(in: machO) else {
+            return nil
+        }
+        guard let (index, layout) = _entries.enumerated().first(
+            where: { _, layout in layout.imageIndex == imageIndex }
+        ) else { return nil }
+        return list(in: machO, for: _entry(layout: layout, at: index))
     }
 }
