@@ -204,6 +204,9 @@ extension ObjCClassProtocol {
             return nil
         }
 
+        // NOTE: In practice, you need to resolve the machO file to which the class belongs.
+        // However, since the correct cache file handle is used internally, this is not a problem.
+
         var data: ClassROData?
         if let _data = cls.classROData(in: machO) {
             data = _data
@@ -237,6 +240,8 @@ extension ObjCClassProtocol {
         if !allowsStubClass, cls.isStubClass {
             return nil
         }
+        // NOTE: In practice, you need to resolve the machO file to which the class belongs.
+        // However, since the correct cache file handle is used internally, this is not a problem.
         guard let data = cls.classROData(in: machO) else {
             return nil
         }
