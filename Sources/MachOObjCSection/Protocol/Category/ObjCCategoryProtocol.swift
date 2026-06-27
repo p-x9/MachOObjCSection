@@ -382,12 +382,15 @@ extension ObjCCategoryProtocol {
         let unresolved = unresolvedValue(of: field)
         guard unresolved.value > 0 else { return nil }
 
-        if let (targetMachO, cls) = _readClass(
-            field: field,
-            in: machO
-        ), !cls.isStubClass ,
-           let data = cls.classROData(in: targetMachO) {
-            return data.name(in: targetMachO)
+        if !isBind(field, in: machO) {
+            let resolved = machO.resolveRebase(unresolved)
+            if let name = ObjCClass._readClassName(
+                resolved: resolved,
+                in: machO,
+                allowsStubClass: false
+            ) {
+                return name
+            }
         }
 
         if let bindSymbolName = resolveBind(field, in: machO) {
