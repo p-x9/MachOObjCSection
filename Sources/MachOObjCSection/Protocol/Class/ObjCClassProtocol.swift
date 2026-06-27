@@ -143,24 +143,11 @@ extension ObjCClassProtocol {
     }
 
     public func superClassName(in machO: MachOImage) -> String? {
-        guard let (machO, superCls) = superClass(in: machO) else {
+        guard layout.superclass > 0,
+              let ptr = UnsafeRawPointer(bitPattern: UInt(layout.superclass)) else {
             return nil
         }
-
-        var data: ClassROData?
-        if let _data = superCls.classROData(in: machO) {
-            data = _data
-        }
-        if let rw = superCls.classRWData(in: machO) {
-            if let _data = rw.classROData(in: machO) {
-                data = _data
-            }
-            if let ext = rw.ext(in: machO),
-               let _data = ext.classROData(in: machO) {
-                data = _data
-            }
-        }
-        return data?.name(in: machO)
+        return Self._readClassName(ptr: ptr, in: machO)
     }
 }
 
@@ -203,6 +190,36 @@ extension ObjCClassProtocol {
 }
 
 extension ObjCClassProtocol {
+    static func _readClassName(
+        ptr: UnsafeRawPointer,
+        in machO: MachOImage,
+        allowsStubClass: Bool = true
+    ) -> String? {
+        let layout = ptr.assumingMemoryBound(to: Layout.self).pointee
+        let cls: Self = .init(
+            layout: layout,
+            offset: Int(bitPattern: ptr) - Int(bitPattern: machO.ptr)
+        )
+        if !allowsStubClass, cls.isStubClass {
+            return nil
+        }
+
+        var data: ClassROData?
+        if let _data = cls.classROData(in: machO) {
+            data = _data
+        }
+        if let rw = cls.classRWData(in: machO) {
+            if let _data = rw.classROData(in: machO) {
+                data = _data
+            }
+            if let ext = rw.ext(in: machO),
+               let _data = ext.classROData(in: machO) {
+                data = _data
+            }
+        }
+        return data?.name(in: machO)
+    }
+
     static func _readClassName(
         resolved: ResolvedValue,
         in machO: MachOFile,
