@@ -203,6 +203,31 @@ extension ObjCClassProtocol {
 }
 
 extension ObjCClassProtocol {
+    static func _readClassName(
+        resolved: ResolvedValue,
+        in machO: MachOFile,
+        allowsStubClass: Bool = true
+    ) -> String? {
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(forResolvedValue: resolved) else {
+            return nil
+        }
+
+        let layout: Layout = fileHandle.read(offset: fileOffset)
+        let cls: Self = .init(
+            layout: layout,
+            offset: numericCast(resolved.offset)
+        )
+        if !allowsStubClass, cls.isStubClass {
+            return nil
+        }
+        // NOTE: In practice, you need to resolve the machO file to which the class belongs.
+        // However, since the correct cache file handle is used internally, this is not a problem.
+        guard let data = cls.classROData(in: machO) else {
+            return nil
+        }
+        return data.name(in: machO)
+    }
+
     private func _readClass(
         field: LayoutField,
         in machO: MachOFile
@@ -240,11 +265,14 @@ extension ObjCClassProtocol {
         let unresolved = unresolvedValue(of: field)
         guard unresolved.value > 0 else { return nil }
 
-        if let (targetMachO, cls) = _readClass(
-            field: field,
-            in: machO
-        ), let data = cls.classROData(in: targetMachO) {
-            return data.name(in: targetMachO)
+        if !isBind(field, in: machO) {
+            let resolved = machO.resolveRebase(unresolved)
+            if let name = Self._readClassName(
+                resolved: resolved,
+                in: machO
+            ) {
+                return name
+            }
         }
 
         if let bindSymbolName = resolveBind(field, in: machO) {
