@@ -209,27 +209,35 @@ extension ObjCCategoryProtocol {
     }
 
     public func className(in machO: MachOImage) -> String? {
-        if layout.cls > 0,
-           let ptr = UnsafeRawPointer(bitPattern: UInt(layout.cls)),
-           let name = ObjCClass._readClassName(
-               ptr: ptr,
-               in: machO,
-               allowsStubClass: false
-           ) {
-            return name
+        guard let (machO, cls) = `class`(in: machO) else {
+            if let section = machO.sectionNumber(for: .__objc_const),
+               let symbol = machO.symbol(
+                for: offset, inSection: section
+               ),
+               symbol.name.starts(with: "__CATEGORY_") {
+                let className = symbol.name
+                    .replacingOccurrences(of: "__CATEGORY_", with: "")
+                    .components(separatedBy: "_$_")
+                    .first
+                return className
+            }
+            return nil
         }
 
-        if let section = machO.sectionNumber(for: .__objc_const),
-           let symbol = machO.symbol(
-            for: offset, inSection: section
-           ),
-           symbol.name.starts(with: "__CATEGORY_") {
-            return symbol.name
-                .replacingOccurrences(of: "__CATEGORY_", with: "")
-                .components(separatedBy: "_$_")
-                .first
+        var data: ObjCClass.ClassROData?
+        if let _data = cls.classROData(in: machO) {
+            data = _data
         }
-        return nil
+        if let rw = cls.classRWData(in: machO) {
+            if let _data = rw.classROData(in: machO) {
+                data = _data
+            }
+            if let ext = rw.ext(in: machO),
+               let _data = ext.classROData(in: machO) {
+                data = _data
+            }
+        }
+        return data?.name(in: machO)
     }
 
     public func instanceMethodList(in machO: MachOImage) -> ObjCMethodList? {

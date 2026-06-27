@@ -143,11 +143,24 @@ extension ObjCClassProtocol {
     }
 
     public func superClassName(in machO: MachOImage) -> String? {
-        guard layout.superclass > 0,
-              let ptr = UnsafeRawPointer(bitPattern: UInt(layout.superclass)) else {
+        guard let (machO, superCls) = superClass(in: machO) else {
             return nil
         }
-        return Self._readClassName(ptr: ptr, in: machO)
+
+        var data: ClassROData?
+        if let _data = superCls.classROData(in: machO) {
+            data = _data
+        }
+        if let rw = superCls.classRWData(in: machO) {
+            if let _data = rw.classROData(in: machO) {
+                data = _data
+            }
+            if let ext = rw.ext(in: machO),
+               let _data = ext.classROData(in: machO) {
+                data = _data
+            }
+        }
+        return data?.name(in: machO)
     }
 }
 
@@ -190,39 +203,6 @@ extension ObjCClassProtocol {
 }
 
 extension ObjCClassProtocol {
-    static func _readClassName(
-        ptr: UnsafeRawPointer,
-        in machO: MachOImage,
-        allowsStubClass: Bool = true
-    ) -> String? {
-        let layout = ptr.assumingMemoryBound(to: Layout.self).pointee
-        let cls: Self = .init(
-            layout: layout,
-            offset: Int(bitPattern: ptr) - Int(bitPattern: machO.ptr)
-        )
-        if !allowsStubClass, cls.isStubClass {
-            return nil
-        }
-
-        // NOTE: In practice, you need to resolve the machO file to which the class belongs.
-        // However, since the correct cache file handle is used internally, this is not a problem.
-
-        var data: ClassROData?
-        if let _data = cls.classROData(in: machO) {
-            data = _data
-        }
-        if let rw = cls.classRWData(in: machO) {
-            if let _data = rw.classROData(in: machO) {
-                data = _data
-            }
-            if let ext = rw.ext(in: machO),
-               let _data = ext.classROData(in: machO) {
-                data = _data
-            }
-        }
-        return data?.name(in: machO)
-    }
-
     static func _readClassName(
         resolved: ResolvedValue,
         in machO: MachOFile,
