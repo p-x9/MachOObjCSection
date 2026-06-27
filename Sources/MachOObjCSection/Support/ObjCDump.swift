@@ -10,15 +10,6 @@ import Foundation
 import MachOKit
 import ObjCDump
 
-extension MachOFile {
-    // WORKAROUND: Due to a bug in MachOKit, the imagePath of a machO obtained from ObjCHeaderInfoRO may sometimes be an empty string.
-    fileprivate var imagePath: String {
-        loadCommands.info(of: LoadCommand.idDylib)?
-            .dylib(in: self)
-            .name ?? ""
-    }
-}
-
 // MARK: - IVar
 extension ObjCIvarProtocol {
     public func info(in machO: MachOFile) -> ObjCIvarInfo? {
