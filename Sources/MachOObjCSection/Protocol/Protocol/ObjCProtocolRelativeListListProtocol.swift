@@ -11,5 +11,8 @@ import Foundation
 public protocol ObjCProtocolRelativeListListProtocol: RelativeListListProtocol where List: ObjCProtocolListProtocol {
 
     @_spi(Core)
+    init(offset: Int, header: Header)
+
+    @_spi(Core)
     init(ptr: UnsafeRawPointer, offset: Int)
 }

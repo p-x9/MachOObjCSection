@@ -16,6 +16,14 @@ public struct ObjCProtocolRelativeListList64: ObjCProtocolRelativeListListProtoc
     public let header: Header
 
     @_spi(Core)
+    public init(offset: Int, header: Header) {
+        self.offset = offset
+        self.header = header
+    }
+}
+
+extension ObjCProtocolRelativeListList64 {
+    @_spi(Core)
     public init(
         ptr: UnsafeRawPointer,
         offset: Int
@@ -52,21 +60,11 @@ public struct ObjCProtocolRelativeListList64: ObjCProtocolRelativeListListProtoc
 
         guard let machO = cache._machO(at: entry.imageIndex)?.value else { return nil }
 
-        let data = try! cache.fileHandle.readData(
-            offset: numericCast(resolvedOffset),
-            length: MemoryLayout<List.Header>.size
+        let header: List.Header = cache.fileHandle.read(offset: resolvedOffset)
+        let list = List(
+            offset: numericCast(offset),
+            header: header
         )
-        let list: List? = data.withUnsafeBytes {
-            guard let ptr = $0.baseAddress else {
-                return nil
-            }
-            return .init(
-                ptr: ptr,
-                offset: numericCast(offset)
-            )
-        }
-
-        guard let list else { return nil }
 
         return (machO, list)
     }
@@ -78,6 +76,14 @@ public struct ObjCProtocolRelativeListList32: ObjCProtocolRelativeListListProtoc
     public let offset: Int
     public let header: Header
 
+    @_spi(Core)
+    public init(offset: Int, header: Header) {
+        self.offset = offset
+        self.header = header
+    }
+}
+
+extension ObjCProtocolRelativeListList32 {
     @_spi(Core)
     public init(
         ptr: UnsafeRawPointer,
@@ -127,21 +133,11 @@ public struct ObjCProtocolRelativeListList32: ObjCProtocolRelativeListListProtoc
             return nil
         }
 
-        let data = try! cache.fileHandle.readData(
-            offset: numericCast(resolvedOffset),
-            length: MemoryLayout<List.Header>.size
+        let header: List.Header = cache.fileHandle.read(offset: resolvedOffset)
+        let list = List(
+            offset: numericCast(offset),
+            header: header
         )
-        let list: List? = data.withUnsafeBytes {
-            guard let ptr = $0.baseAddress else {
-                return nil
-            }
-            return .init(
-                ptr: ptr,
-                offset: numericCast(offset)
-            )
-        }
-
-        guard let list else { return nil }
 
         return (listMachO, list)
     }

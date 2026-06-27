@@ -14,7 +14,9 @@ public struct ObjCMethodRelativeListList: RelativeListListProtocol {
 
     public let offset: Int
     public let header: Header
+}
 
+extension ObjCMethodRelativeListList {
     init(
         ptr: UnsafeRawPointer,
         offset: Int
@@ -54,22 +56,12 @@ extension ObjCMethodRelativeListList {
 
         guard let machO = cache._machO(at: entry.imageIndex)?.value else { return nil }
 
-        let data = try! cache.fileHandle.readData(
-            offset: numericCast(resolvedOffset),
-            length: MemoryLayout<List.Header>.size
+        let header: List.Header = cache.fileHandle.read(offset: resolvedOffset)
+        let list = List(
+            offset: numericCast(offset),
+            header: header,
+            is64Bit: machO.is64Bit
         )
-        let list: List? = data.withUnsafeBytes {
-            guard let ptr = $0.baseAddress else {
-                return nil
-            }
-            return .init(
-                ptr: ptr,
-                offset: numericCast(offset),
-                is64Bit: machO.is64Bit
-            )
-        }
-
-        guard let list else { return nil }
 
         return (machO, list)
     }

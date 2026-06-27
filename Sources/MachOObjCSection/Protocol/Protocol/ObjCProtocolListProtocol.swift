@@ -21,6 +21,9 @@ public protocol ObjCProtocolListProtocol {
     var header: Header { get }
 
     @_spi(Core)
+    init(offset: Int, header: Header)
+
+    @_spi(Core)
     init(ptr: UnsafeRawPointer, offset: Int)
 
     func protocols(in machO: MachOImage) -> [(MachOImage, ObjCProtocol)]?
