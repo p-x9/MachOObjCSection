@@ -17,6 +17,14 @@ public struct ObjCProtocolList32: ObjCProtocolListProtocol {
     public let header: Header
 
     @_spi(Core)
+    public init(offset: Int, header: Header) {
+        self.offset = offset
+        self.header = header
+    }
+}
+
+extension ObjCProtocolList32 {
+    @_spi(Core)
     public init(ptr: UnsafeRawPointer, offset: Int) {
         self.offset = offset
         self.header = ptr.assumingMemoryBound(to: Header.self).pointee

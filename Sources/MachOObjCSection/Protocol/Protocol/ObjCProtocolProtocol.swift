@@ -211,17 +211,12 @@ extension ObjCProtocolProtocol {
             return nil
         }
 
-        let data = try! fileHandle.readData(
-            offset: numericCast(fileOffset),
-            length: MemoryLayout<ObjCProtocolList64.Header>.size
+        let header: ObjCProtocolList.Header = fileHandle.read(offset: fileOffset)
+        let list = ObjCProtocolList(
+            offset: numericCast(resolved.offset),
+            header: header
         )
-        return data.withUnsafeBytes {
-            guard let baseAddress = $0.baseAddress else { return nil }
-            return .init(
-                ptr: baseAddress,
-                offset: numericCast(resolved.offset)
-            )
-        }
+        return list
     }
 
     public func instanceMethodList(in machO: MachOFile) -> ObjCMethodList? {
@@ -339,18 +334,16 @@ extension ObjCProtocolProtocol {
             return nil
         }
 
-        let data = try! fileHandle.readData(
-            offset: numericCast(fileOffset),
-            length: MemoryLayout<ObjCMethodList.Header>.size
+        let header: ObjCMethodList.Header = fileHandle.read(offset: fileOffset)
+        let list = ObjCMethodList(
+            offset: numericCast(resolved.offset),
+            header: header,
+            is64Bit: machO.is64Bit
         )
-        return data.withUnsafeBytes {
-            guard let baseAddress = $0.baseAddress else { return nil }
-            return .init(
-                ptr: baseAddress,
-                offset: numericCast(resolved.offset),
-                is64Bit: machO.is64Bit
-            )
+        if list.isValidEntrySize(is64Bit: machO.is64Bit) == false {
+            return nil
         }
+        return list
     }
 
     fileprivate func _readObjCPropertyList(
@@ -366,17 +359,15 @@ extension ObjCProtocolProtocol {
             return nil
         }
 
-        let data = try! fileHandle.readData(
-            offset: numericCast(fileOffset),
-            length: MemoryLayout<ObjCPropertyList.Header>.size
+        let header: ObjCPropertyList.Header = fileHandle.read(offset: fileOffset)
+        let list = ObjCPropertyList(
+            offset: numericCast(resolved.offset),
+            header: header,
+            is64Bit: machO.is64Bit
         )
-        return data.withUnsafeBytes {
-            guard let baseAddress = $0.baseAddress else { return nil }
-            return .init(
-                ptr: baseAddress,
-                offset: numericCast(resolved.offset),
-                is64Bit: machO.is64Bit
-            )
+        if list.isValidEntrySize(is64Bit: machO.is64Bit) == false {
+            return nil
         }
+        return list
     }
 }

@@ -16,7 +16,9 @@ public struct ObjCPropertyList: EntrySizeListProtocol {
     public let offset: Int
     public let header: Header
     public let is64Bit: Bool
+}
 
+extension ObjCPropertyList {
     init(
         ptr: UnsafeRawPointer,
         offset: Int,

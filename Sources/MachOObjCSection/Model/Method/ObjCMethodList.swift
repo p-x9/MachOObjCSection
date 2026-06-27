@@ -15,12 +15,14 @@ import Foundation
 
 public struct ObjCMethodList: EntrySizeListProtocol {
     public typealias Entry = ObjCMethod
-    
+
     /// Offset from machO header start
     public let offset: Int
     public let header: Header
     public let is64Bit: Bool
+}
 
+extension ObjCMethodList {
     init(
         ptr: UnsafeRawPointer,
         offset: Int,
