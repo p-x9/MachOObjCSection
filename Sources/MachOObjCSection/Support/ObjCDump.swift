@@ -11,7 +11,7 @@ import MachOKit
 import ObjCDump
 
 /// Options that control how Objective-C class and category metadata is converted.
-public struct ObjCInfoOptions {
+public struct ObjCInfoOptions: Sendable {
     /// Options used when converting protocols referenced by classes and categories.
     public var protocolInfoOptions: ObjCProtocolInfoOptions
 
@@ -38,9 +38,9 @@ public struct ObjCInfoOptions {
 }
 
 /// Options that control how Objective-C protocol metadata is converted.
-public struct ObjCProtocolInfoOptions {
+public struct ObjCProtocolInfoOptions: Sendable {
     /// Controls how far referenced protocols are followed.
-    public enum Traversal {
+    public enum Traversal: Sendable {
         /// Expands referenced protocols recursively.
         case recursive
 
@@ -52,7 +52,7 @@ public struct ObjCProtocolInfoOptions {
     }
 
     /// Controls how much information is materialized for referenced protocols.
-    public enum ReferencedProtocolInfo {
+    public enum ReferencedProtocolInfo: Sendable {
         /// Materializes full protocol information, including members and references.
         case full
 
