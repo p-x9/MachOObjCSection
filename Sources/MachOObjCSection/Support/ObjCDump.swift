@@ -28,11 +28,11 @@ public struct ObjCInfoOptions: Sendable {
     /// Preserves the default behavior and expands referenced protocols recursively.
     public static let recursive = ObjCInfoOptions()
 
-    /// Converts directly referenced protocols to name-only protocol information.
+    /// Uses the protocol detail level needed for Objective-C header dumps.
     ///
-    /// This is useful when dumping classes or categories without paying the cost of
-    /// recursively materializing every adopted protocol.
-    public static let directProtocolNames = ObjCInfoOptions(
+    /// Header declarations need the names of directly adopted protocols, but they
+    /// do not need to recursively materialize those protocols' members.
+    public static let headerDump = ObjCInfoOptions(
         protocolInfoOptions: .directProtocolNames
     )
 }
@@ -86,9 +86,9 @@ public struct ObjCProtocolInfoOptions: Sendable {
     /// Includes direct protocol references as name-only protocol information.
     ///
     /// For a protocol, this keeps the protocol's own members but represents directly
-    /// referenced protocols by name only. For a class or category, use
-    /// ``ObjCInfoOptions/directProtocolNames`` to apply the same policy to adopted
-    /// protocols.
+    /// referenced protocols by name only. For a class or category, pass this value
+    /// to ``ObjCInfoOptions/init(protocolInfoOptions:)`` to apply the same policy
+    /// to adopted protocols.
     public static let directProtocolNames = ObjCProtocolInfoOptions(
         traversal: .depth(1),
         referencedProtocolInfo: .nameOnly
@@ -166,13 +166,9 @@ extension ObjCMethod {
 
 // MARK: - Protocol
 extension ObjCProtocolProtocol {
-    public func info(in machO: MachOFile) -> ObjCProtocolInfo? {
-        info(in: machO, options: .recursive)
-    }
-
     public func info(
         in machO: MachOFile,
-        options: ObjCProtocolInfoOptions
+        options: ObjCProtocolInfoOptions = .recursive
     ) -> ObjCProtocolInfo? {
         let name = mangledName(in: machO)
 
@@ -226,13 +222,9 @@ extension ObjCProtocolProtocol {
         )
     }
 
-    public func info(in machO: MachOImage) -> ObjCProtocolInfo? {
-        info(in: machO, options: .recursive)
-    }
-
     public func info(
         in machO: MachOImage,
-        options: ObjCProtocolInfoOptions
+        options: ObjCProtocolInfoOptions = .recursive
     ) -> ObjCProtocolInfo? {
         let name = mangledName(in: machO)
 
