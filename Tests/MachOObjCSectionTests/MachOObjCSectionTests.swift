@@ -93,7 +93,7 @@ extension MachOObjCSectionTests {
         let machO = machOImage!
         guard let classes = machO.objc.classes64 else { return }
         for cls in classes {
-            guard let info = cls.info(in: machO) else {
+            guard let info = cls.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse class")
                 continue
             }
@@ -105,7 +105,7 @@ extension MachOObjCSectionTests {
         let machO = machOFile!
         guard let classes = machO.objc.classes64 else { return }
         for cls in classes.prefix(100) {
-            guard let info = cls.info(in: machO) else {
+            guard let info = cls.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse class")
                 continue
             }
@@ -117,7 +117,7 @@ extension MachOObjCSectionTests {
         let machO = machOFileInCache!
         guard let classes = machO.objc.classes64 else { return }
         for cls in classes {
-            guard let info = cls.info(in: machO) else {
+            guard let info = cls.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse class")
                 continue
             }
@@ -132,7 +132,7 @@ extension MachOObjCSectionTests {
         let machO = machOImage!
         guard let classes = machO.objc.nonLazyClasses64 else { return }
         for cls in classes {
-            guard let info = cls.info(in: machO) else {
+            guard let info = cls.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse class")
                 continue
             }
@@ -144,7 +144,7 @@ extension MachOObjCSectionTests {
         let machO = machOFile!
         guard let classes = machO.objc.nonLazyClasses64 else { return }
         for cls in classes {
-            guard let info = cls.info(in: machO) else {
+            guard let info = cls.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse class")
                 continue
             }
@@ -156,7 +156,7 @@ extension MachOObjCSectionTests {
         let machO = machOFileInCache!
         guard let classes = machO.objc.nonLazyClasses64 else { return }
         for cls in classes {
-            guard let info = cls.info(in: machO) else {
+            guard let info = cls.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse class")
                 continue
             }
@@ -171,7 +171,7 @@ extension MachOObjCSectionTests {
         let machO = machOImage!
         guard let protocols = machO.objc.protocols64 else { return }
         for proto in protocols {
-            guard let info = proto.info(in: machO) else {
+            guard let info = proto.info(in: machO, options: .directProtocolNames) else {
                 XCTFail("Failed to parse protocol")
                 continue
             }
@@ -183,7 +183,7 @@ extension MachOObjCSectionTests {
         let machO = machOFile!
         guard let protocols = machO.objc.protocols64 else { return }
         for proto in protocols {
-            guard let info = proto.info(in: machO) else {
+            guard let info = proto.info(in: machO, options: .directProtocolNames) else {
                 XCTFail("Failed to parse protocol")
                 continue
             }
@@ -195,7 +195,7 @@ extension MachOObjCSectionTests {
         let machO = machOFileInCache!
         guard let protocols = machO.objc.protocols64 else { return }
         for proto in protocols {
-            guard let info = proto.info(in: machO) else {
+            guard let info = proto.info(in: machO, options: .directProtocolNames) else {
                 XCTFail("Failed to parse protocol")
                 continue
             }
@@ -210,7 +210,7 @@ extension MachOObjCSectionTests {
         let machO = machOImage!
         guard let categories = machO.objc.categories64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -222,7 +222,7 @@ extension MachOObjCSectionTests {
         let machO = machOFile!
         guard let categories = machO.objc.categories64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -234,7 +234,7 @@ extension MachOObjCSectionTests {
         let machO = machOFileInCache!
         guard let categories = machO.objc.categories64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -249,7 +249,7 @@ extension MachOObjCSectionTests {
         let machO = machOImage!
         guard let categories = machO.objc.nonLazyCategories64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -261,7 +261,7 @@ extension MachOObjCSectionTests {
         let machO = machOFile!
         guard let categories = machO.objc.nonLazyCategories64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -273,7 +273,7 @@ extension MachOObjCSectionTests {
         let machO = machOFileInCache!
         guard let categories = machO.objc.nonLazyCategories64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -288,7 +288,7 @@ extension MachOObjCSectionTests {
         let machO = machOImage!
         guard let categories = machO.objc.categories2_64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -300,7 +300,7 @@ extension MachOObjCSectionTests {
         let machO = machOFile!
         guard let categories = machO.objc.categories2_64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
@@ -312,7 +312,7 @@ extension MachOObjCSectionTests {
         let machO = machOFileInCache!
         guard let categories = machO.objc.categories2_64 else { return }
         for cat in categories {
-            guard let info = cat.info(in: machO) else {
+            guard let info = cat.info(in: machO, options: .headerDump) else {
                 XCTFail("Failed to parse category")
                 continue
             }
