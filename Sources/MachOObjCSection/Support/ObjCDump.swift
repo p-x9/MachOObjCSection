@@ -393,13 +393,9 @@ extension ObjCProtocolListProtocol {
 
 // MARK: - Class
 extension ObjCClassProtocol {
-    public func info(in machO: MachOFile) -> ObjCClassInfo? {
-        info(in: machO, options: .recursive)
-    }
-
     public func info(
         in machO: MachOFile,
-        options: ObjCInfoOptions
+        options: ObjCInfoOptions = .recursive
     ) -> ObjCClassInfo? {
         guard let data = classROData(in: machO),
               let (targetMachO, meta) = metaClass(in: machO),
@@ -481,13 +477,9 @@ extension ObjCClassProtocol {
         )
     }
 
-    public func info(in machO: MachOImage) -> ObjCClassInfo? {
-        info(in: machO, options: .recursive)
-    }
-
     public func info(
         in machO: MachOImage,
-        options: ObjCInfoOptions
+        options: ObjCInfoOptions = .recursive
     ) -> ObjCClassInfo? {
         guard let (targetMachO, meta) = metaClass(in: machO) else {
             return nil
@@ -602,13 +594,9 @@ extension ObjCClassProtocol {
 
 // MARK: Category
 extension ObjCCategoryProtocol {
-    public func info(in machO: MachOImage) -> ObjCCategoryInfo? {
-        info(in: machO, options: .recursive)
-    }
-
     public func info(
         in machO: MachOImage,
-        options: ObjCInfoOptions
+        options: ObjCInfoOptions = .recursive
     ) -> ObjCCategoryInfo? {
         guard let name = name(in: machO),
               let className = className(in: machO) else {
@@ -654,13 +642,9 @@ extension ObjCCategoryProtocol {
         )
     }
 
-    public func info(in machO: MachOFile) -> ObjCCategoryInfo? {
-        info(in: machO, options: .recursive)
-    }
-
     public func info(
         in machO: MachOFile,
-        options: ObjCInfoOptions
+        options: ObjCInfoOptions = .recursive
     ) -> ObjCCategoryInfo? {
         guard let name = name(in: machO),
               let className = className(in: machO) else {
