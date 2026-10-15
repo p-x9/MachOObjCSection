@@ -41,7 +41,10 @@ extension ObjCProtocolListProtocol {
         in machO: MachOImage,
         pointerType: Pointer.Type
     ) -> [(MachOImage, ObjCProtocol)]? {
-        guard !isListOfLists else { return nil }
+        guard !isListOfLists else {
+            assertionFailure()
+            return nil
+        }
 
         let ptr = machO.ptr.advanced(by: offset)
         let sequnece = MemorySequence(

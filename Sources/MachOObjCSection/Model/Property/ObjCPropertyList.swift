@@ -54,8 +54,10 @@ extension ObjCPropertyList {
     public func properties(
         in machO: MachOImage
     ) -> [ObjCProperty] {
-        // TODO: Support listOfLists
-        guard !isListOfLists else { return [] }
+        guard !isListOfLists else {
+            assertionFailure()
+            return []
+        }
 
         let ptr = machO.ptr.advanced(by: offset)
         let start = ptr.advanced(by: MemoryLayout<Header>.size)
