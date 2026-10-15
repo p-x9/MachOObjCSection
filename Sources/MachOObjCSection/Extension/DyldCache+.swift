@@ -39,87 +39,14 @@ extension DyldCache {
     }
 }
 
-// MARK: - locate value
-extension DyldCache {
-    /// A tuple containing the DyldCache where the value was found and the resolved value itself.
-    /// Useful because values may be located either in the current cache, the main cache,
-    /// or one of its subcaches.
-    typealias LocatedValue<V> = (cache: DyldCache, value: V)
-
-    /// Locate a value for a given optional KeyPath within this cache hierarchy.
-    ///
-    /// This resolves the value by checking:
-    /// 1. This cache
-    /// 2. The main cache
-    /// 3. Any subcaches derived from `mainCache`
-    ///
-    /// - Parameter keyPath: A keyPath returning an optional value.
-    /// - Returns: A tuple of `(cache, value)` if resolved, or `nil` if not found.
-    @inline(__always)
-    func locateValue<V>(
-        _ keyPath: KeyPath<DyldCache, V?>
-    ) -> LocatedValue<V>? {
-        locateValue({ $0[keyPath: keyPath] })
-    }
-
-    /// Locate a value using a custom resolver function running against each cache in the hierarchy.
-    ///
-    /// Resolution order:
-    /// 1. This cache
-    /// 2. The main cache
-    /// 3. Each subcache of the main cache
-    ///
-    /// - Parameter resolver: A closure returning an optional value for a given DyldCache.
-    /// - Returns: A tuple of `(cache, value)` if resolution is successful; otherwise `nil`.
-    @inline(__always)
-    func locateValue<V>(
-        _ resolver: (DyldCache) throws -> V?
-    ) rethrows -> LocatedValue<V>? {
-        if let value = try resolver(self) {
-            return (self, value)
-        }
-
-        if let fullCache = _cachedFullCache {
-            return try fullCache.locateValue(
-                resolver,
-                excluding: self
-            )
-        }
-
-        guard let mainCache else { return nil }
-        let uuid = header.layout.uuid
-
-        if !isEqual(mainCache.header.layout.uuid, uuid),
-           let value = try resolver(mainCache) {
-            return (mainCache, value)
-        }
-
-        guard let subCaches = mainCache.subCaches else { return nil }
-        let fileName = url.lastPathComponent
-        for entry in subCaches {
-            if fileName.hasSuffix(entry.fileSuffix) {
-                continue
-            }
-
-            guard let subCache = try? entry.subcache(for: mainCache) else {
-                continue
-            }
-            if let value = try resolver(subCache) {
-                return (subCache, value)
-            }
-        }
-        return nil
-    }
-}
-
 // MARK: - Objective-C
 extension DyldCache {
     var _objcOptimization: LocatedValue<ObjCOptimization>? {
-        locateValue(\.objcOptimization)
+        try? locateValue(\.objcOptimization)
     }
 
     var _oldObjcOptimization: LocatedValue<OldObjCOptimization>? {
-        locateValue(\.oldObjcOptimization)
+        try? locateValue(\.oldObjcOptimization)
     }
 }
 
@@ -149,19 +76,19 @@ extension DyldCache {
 
 extension DyldCache {
     var _headerOptimizationRO64: LocatedValue<ObjCHeaderOptimizationRO64>? {
-        locateValue(\.headerOptimizationRO64)
+        try? locateValue(\.headerOptimizationRO64)
     }
 
     var _headerOptimizationRO32: LocatedValue<ObjCHeaderOptimizationRO32>? {
-        locateValue(\.headerOptimizationRO32)
+        try? locateValue(\.headerOptimizationRO32)
     }
 }
 
 extension DyldCache {
     func _machO(at index: Int) -> LocatedValue<MachOFile>? {
-        if let (cache, ro) = _headerOptimizationRO64,
-           ro.contains(index: index) {
-            let headers = ro.headerInfos(in: cache)
+        if let located = _headerOptimizationRO64,
+           located.value.contains(index: index) {
+            let headers = located.value.headerInfos(in: located.cache)
             guard let header = headers?.first(
                 where: {
                     $0.index == index
@@ -169,11 +96,11 @@ extension DyldCache {
             ) else {
                 return nil
             }
-            return locateValue { header.machO(in: $0) }
+            return try? locateValue { header.machO(in: $0) }
         }
-        if let (cache, ro) = _headerOptimizationRO32,
-           ro.contains(index: index) {
-            let headers = ro.headerInfos(in: cache)
+        if let located = _headerOptimizationRO32,
+           located.value.contains(index: index) {
+            let headers = located.value.headerInfos(in: located.cache)
             guard let header = headers?.first(
                 where: {
                     $0.index == index
@@ -181,7 +108,7 @@ extension DyldCache {
             ) else {
                 return nil
             }
-            return locateValue { header.machO(in: $0) }
+            return try? locateValue { header.machO(in: $0) }
         }
         return nil
     }

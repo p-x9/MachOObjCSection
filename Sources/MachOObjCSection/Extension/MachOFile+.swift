@@ -34,7 +34,7 @@ extension MachOFile {
         if let fullCache = cache._cachedFullCache {
             return fullCache.cache(for: address)
         }
-        return cache.locateValue({ $0.fileOffset(of: address) })?.cache
+        return (try? cache.locateValue { $0.fileOffset(of: address) })?.cache
     }
 
     /// Convert an address that is not slided into the actual cache it contains and the file offset in it.
@@ -45,7 +45,10 @@ extension MachOFile {
         if let fullCache = cache._cachedFullCache {
             return fullCache.cacheAndFileOffset(for: address)
         }
-        return cache.locateValue { $0.fileOffset(of: address) }
+        guard let located = try? cache.locateValue({ $0.fileOffset(of: address) }) else {
+            return nil
+        }
+        return (located.cache, located.value)
     }
 
     /// Converts the offset from the start of the main cache to the actual cache
@@ -110,7 +113,7 @@ extension MachOFile {
         let offset: UInt64 = numericCast(entry.offset + entry.listOffset)
 
         guard let cache,
-              let (_, machO) = cache._machO(at: entry.imageIndex) else {
+              let machO = cache._machO(at: entry.imageIndex)?.value else {
             return nil
         }
 
@@ -190,7 +193,7 @@ extension MachOFile {
             if let fullCache = cache._cachedFullCache {
                 return fullCache.relativeMethodSelectorBaseAddressOffset
             }
-            return cache.locateValue(\.relativeMethodSelectorBaseAddressOffset)?.value
+            return (try? cache.locateValue(\.relativeMethodSelectorBaseAddressOffset))?.value
         }
 
         return nil
@@ -242,12 +245,12 @@ extension MachOFile {
     var objcImageIndex: Int? {
         guard isLoadedFromDyldCache else { return nil }
         guard let cache else { return nil }
-        if let (cache, headerOptimizationRO) = cache._headerOptimizationRO64,
-           let info = headerOptimizationRO.headerInfo(in: cache, for: self) {
+        if let located = cache._headerOptimizationRO64,
+           let info = located.value.headerInfo(in: located.cache, for: self) {
             return info.index
         }
-        if let (cache, headerOptimizationRO) = cache._headerOptimizationRO32,
-           let info = headerOptimizationRO.headerInfo(in: cache, for: self) {
+        if let located = cache._headerOptimizationRO32,
+           let info = located.value.headerInfo(in: located.cache, for: self) {
             return info.index
         }
         return nil
