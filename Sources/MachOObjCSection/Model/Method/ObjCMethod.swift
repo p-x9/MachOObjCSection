@@ -134,7 +134,7 @@ extension ObjCMethod {
                     .address(from: typeBase)
                     .assumingMemoryBound(to: CChar.self)
             ),
-            imp: numericCast(
+            imp: relativeDirect.imp.isNull ? 0 : numericCast(
                 UInt(
                     bitPattern: relativeDirect.imp
                         .address(from: pointer.advanced(by: 8))
@@ -164,7 +164,7 @@ extension ObjCMethod {
                     .address(from: pointer.advanced(by: 4))
                     .assumingMemoryBound(to: CChar.self)
             ),
-            imp: numericCast(
+            imp: relativeIndirect.imp.isNull ? 0 : numericCast(
                 UInt(
                     bitPattern: relativeIndirect.imp
                         .address(from: pointer.advanced(by: 8))

@@ -326,11 +326,15 @@ extension ObjCMethodList {
             adjustment: 4
         ) ?? 0
 
-        let imp = resolvedOffset(
-            base: entryOffset,
-            relative: relativeIndirect.imp.offset,
-            adjustment: 8
-        ) ?? 0
+        let imp: UInt64 = if relativeIndirect.imp.isNull {
+            0
+        } else {
+            resolvedOffset(
+                base: entryOffset,
+                relative: relativeIndirect.imp.offset,
+                adjustment: 8
+            ) ?? 0
+        }
 
         return ObjCMethod(
             name: resolveString(
@@ -370,11 +374,15 @@ extension ObjCMethodList {
             ) ?? 0
         }
 
-        let imp = resolvedOffset(
-            base: entryOffset,
-            relative: relativeDirect.imp.offset,
-            adjustment: 8
-        ) ?? 0
+        let imp: UInt64 = if relativeDirect.imp.isNull {
+            0
+        } else {
+            resolvedOffset(
+                base: entryOffset,
+                relative: relativeDirect.imp.offset,
+                adjustment: 8
+            ) ?? 0
+        }
 
         return ObjCMethod(
             name: resolveString(
