@@ -15,6 +15,10 @@ import Foundation
 public struct ObjCProperty {
     public let name: String
     public let attributes: String
+    /// Position of this entry itself.
+    ///
+    /// It has the same origin as ``ObjCPropertyList/offset`` of the list that contains this entry.
+    public let offset: Int
 }
 
 extension ObjCProperty {
@@ -23,10 +27,11 @@ extension ObjCProperty {
         let attributes: UnsafePointer<CChar>
     }
 
-    init(_ property: Property) {
+    init(_ property: Property, offset: Int) {
         self.init(
             name: .init(cString: property.name),
-            attributes: .init(cString: property.attributes)
+            attributes: .init(cString: property.attributes),
+            offset: offset
         )
     }
 }
@@ -49,10 +54,12 @@ extension ObjCProperty {
     struct UnresolvedProperty {
         let name: UnresolvedValue
         let attributes: UnresolvedValue
+        let offset: Int
     }
 
     struct ResolvedProperty {
         let name: ResolvedValue
         let attributes: ResolvedValue
+        let offset: Int
     }
 }

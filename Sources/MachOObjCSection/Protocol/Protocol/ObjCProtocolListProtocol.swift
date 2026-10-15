@@ -17,6 +17,12 @@ public protocol ObjCProtocolListProtocol {
     associatedtype Header: ObjCProtocolListHeaderProtocol
     associatedtype ObjCProtocol: ObjCProtocolProtocol
 
+    /// Position of this list.
+    ///
+    /// The origin depends on where the Mach-O comes from.
+    /// - Mach-O file: file offset from the start of the Mach-O header.
+    /// - Mach-O in a dyld cache file: offset in the address space from the start (header) of the main cache.
+    /// - Loaded Mach-O (`MachOImage`): offset from the start of the Mach-O header.
     var offset: Int { get }
     var header: Header { get }
 
@@ -25,6 +31,11 @@ public protocol ObjCProtocolListProtocol {
 
     @_spi(Core)
     init(ptr: UnsafeRawPointer, offset: Int)
+
+    /// Position of the pointer slot of the protocol at `index` in this list.
+    ///
+    /// It has the same origin as ``offset``.
+    func entryOffset(at index: Int) -> Int
 
     func protocols(in machO: MachOImage) -> [(MachOImage, ObjCProtocol)]?
     func protocols(in machO: MachOFile) -> [(MachOFile, ObjCProtocol)]?

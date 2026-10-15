@@ -32,6 +32,14 @@ extension ObjCProtocolList32 {
 }
 
 extension ObjCProtocolList32 {
+    public func entryOffset(at index: Int) -> Int {
+        offset
+        + MemoryLayout<Header>.size
+        + MemoryLayout<UInt32>.stride * index
+    }
+}
+
+extension ObjCProtocolList32 {
     public func protocols(
         in machO: MachOImage
     ) -> [(MachOImage, ObjCProtocol)]? {
@@ -59,9 +67,7 @@ extension ObjCProtocolList32 {
         return sequnece.enumerated()
             .map { i, value in
                 UnresolvedValue(
-                    fieldOffset: offset
-                    + MemoryLayout<Header>.size
-                    + MemoryLayout<UInt32>.stride * i,
+                    fieldOffset: entryOffset(at: i),
                     value: numericCast(value)
                 )
             }

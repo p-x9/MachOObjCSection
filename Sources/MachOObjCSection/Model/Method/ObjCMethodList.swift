@@ -16,7 +16,12 @@ import Foundation
 public struct ObjCMethodList: EntrySizeListProtocol {
     public typealias Entry = ObjCMethod
 
-    /// Offset from machO header start
+    /// Position of this list.
+    ///
+    /// The origin depends on where the Mach-O comes from.
+    /// - Mach-O file: file offset from the start of the Mach-O header.
+    /// - Mach-O in a dyld cache file: offset in the address space from the start (header) of the main cache.
+    /// - Loaded Mach-O (`MachOImage`): offset from the start of the Mach-O header.
     public let offset: Int
     public let header: Header
     public let is64Bit: Bool
@@ -109,8 +114,15 @@ extension ObjCMethodList {
                 ),
                 numberOfElements: count
             )
+            let size = MemoryLayout<ObjCMethod.Pointer>.size
             return sequence
-                .map { ObjCMethod($0) }
+                .enumerated()
+                .map {
+                    ObjCMethod(
+                        $1,
+                        offset: entryOffset(at: $0, entrySize: size)
+                    )
+                }
 
         case .relativeDirectSelectors:
             let sequence = MemorySequence(
@@ -126,6 +138,7 @@ extension ObjCMethodList {
                     ObjCMethod(
                         $1,
                         at: start.advanced(by: size * $0),
+                        offset: entryOffset(at: $0, entrySize: size),
                         isRelativeDirectType: false
                     )
                 }
@@ -144,6 +157,7 @@ extension ObjCMethodList {
                     ObjCMethod(
                         $1,
                         at: start.advanced(by: size * $0),
+                        offset: entryOffset(at: $0, entrySize: size),
                         isRelativeDirectType: true
                     )
                 }
@@ -159,7 +173,11 @@ extension ObjCMethodList {
             return sequence
                 .enumerated()
                 .map {
-                    ObjCMethod($1, at: start.advanced(by: size * $0))
+                    ObjCMethod(
+                        $1,
+                        at: start.advanced(by: size * $0),
+                        offset: entryOffset(at: $0, entrySize: size)
+                    )
                 }
         }
     }
@@ -184,16 +202,32 @@ extension ObjCMethodList {
                 numberOfElements: count,
                 swapHandler: nil
             )
+            let size = MemoryLayout<ObjCMethod.Pointer64>.size
             return sequence
-                .map { pointerMethod($0, in: machO) }
+                .enumerated()
+                .map {
+                    pointerMethod(
+                        $1,
+                        in: machO,
+                        entryOffset: numericCast(offset) + $0 * size
+                    )
+                }
         case .pointer:
             let sequence: DataSequence<ObjCMethod.Pointer32> = fileHandle.readDataSequence(
                 offset: fileOffset,
                 numberOfElements: count,
                 swapHandler: nil
             )
+            let size = MemoryLayout<ObjCMethod.Pointer32>.size
             return sequence
-                .map { pointerMethod($0, in: machO) }
+                .enumerated()
+                .map {
+                    pointerMethod(
+                        $1,
+                        in: machO,
+                        entryOffset: numericCast(offset) + $0 * size
+                    )
+                }
 
         case .relativeIndirect:
             let sequence: DataSequence<ObjCMethod.RelativeInDirect> = fileHandle.readDataSequence(
@@ -263,7 +297,8 @@ extension ObjCMethodList {
 extension ObjCMethodList {
     private func pointerMethod(
         _ pointer: ObjCMethod.Pointer64,
-        in machO: MachOFile
+        in machO: MachOFile,
+        entryOffset: Int
     ) -> ObjCMethod {
         let imp: UInt64 = if let cache = machO.cache, pointer.imp > 0 {
             numericCast(pointer.imp) - cache.mainCacheHeader.sharedRegionStart
@@ -280,13 +315,15 @@ extension ObjCMethodList {
                 in: machO,
                 forAddress: pointer.types
             ),
-            imp: imp
+            imp: imp,
+            offset: entryOffset
         )
     }
 
     private func pointerMethod(
         _ pointer: ObjCMethod.Pointer32,
-        in machO: MachOFile
+        in machO: MachOFile,
+        entryOffset: Int
     ) -> ObjCMethod {
         let imp: UInt64 = if let cache = machO.cache, pointer.imp > 0 {
             numericCast(pointer.imp) - cache.mainCacheHeader.sharedRegionStart
@@ -303,7 +340,8 @@ extension ObjCMethodList {
                 in: machO,
                 forAddress: numericCast(pointer.types)
             ),
-            imp: imp
+            imp: imp,
+            offset: entryOffset
         )
     }
 
@@ -346,7 +384,8 @@ extension ObjCMethodList {
             types: fileHandle.readString(
                 offset: numericCast(types)
             ) ?? "",
-            imp: imp
+            imp: imp,
+            offset: numericCast(entryOffset)
         )
     }
 
@@ -395,12 +434,17 @@ extension ObjCMethodList {
                 in: machO,
                 forOffset: typesOffset
             ),
-            imp: imp
+            imp: imp,
+            offset: numericCast(entryOffset)
         )
     }
 }
 
 extension ObjCMethodList {
+    private func entryOffset(at index: Int, entrySize: Int) -> Int {
+        offset + MemoryLayout<Header>.size + entrySize * index
+    }
+
     private func resolvedOffset<Offset: BinaryInteger>(
         base: UInt64,
         relative: Offset,
