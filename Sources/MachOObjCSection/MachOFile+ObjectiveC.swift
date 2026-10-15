@@ -326,13 +326,13 @@ extension MachOFile.ObjectiveC {
         from section: any SectionProtocol,
         in machO: MachOFile
     ) -> [Class]? {
-        guard let fileSlice = machO._fileSliceForSection(section: section) else {
+        guard let fileSlice = machO._fileSliceForSection(section: section),
+              let data = try? fileSlice.readData(
+                offset: 0,
+                length: section.size
+              ) else {
             return nil
         }
-        let data = try! fileSlice.readData(
-            offset: 0,
-            length: section.size
-        )
 
         let offset: UInt64 = if let cache = machO.cache {
             numericCast(section.address) - cache.mainCacheHeader.sharedRegionStart
