@@ -73,6 +73,41 @@ extension ObjCClassProtocol {
 }
 
 extension ObjCClassProtocol {
+    /// The offset of `swiftClassFlags`, which follows the fixed part of `class_t`.
+    private var swiftClassFlagsOffset: Int {
+        offset + MemoryLayout<Layout>.size
+    }
+
+    /// Flags of a Swift class (`swiftClassFlags` in `objc_class`).
+    ///
+    /// This field is only present if the class is a Swift class (has the Swift fast bits set).
+    /// - Returns: `nil` if the class is not a Swift class or the field cannot be read.
+    public func swiftClassFlags(in machO: MachOFile) -> UInt32? {
+        guard isSwift else { return nil }
+        guard let (fileHandle, fileOffset) = machO.fileHandleAndOffset(
+            forOffset: numericCast(swiftClassFlagsOffset)
+        ) else {
+            return nil
+        }
+        return try? fileHandle.read(
+            offset: numericCast(fileOffset),
+            as: UInt32.self
+        )
+    }
+
+    /// Flags of a Swift class (`swiftClassFlags` in `objc_class`).
+    ///
+    /// This field is only present if the class is a Swift class (has the Swift fast bits set).
+    /// - Returns: `nil` if the class is not a Swift class.
+    public func swiftClassFlags(in machO: MachOImage) -> UInt32? {
+        guard isSwift else { return nil }
+        return machO.ptr
+            .advanced(by: swiftClassFlagsOffset)
+            .load(as: UInt32.self)
+    }
+}
+
+extension ObjCClassProtocol {
     public func metaClass(in machO: MachOFile) -> (MachOFile, Self)? {
         _readClass(
             field: .isa,

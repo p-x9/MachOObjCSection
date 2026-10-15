@@ -17,10 +17,6 @@ public protocol _ObjCClassLayoutProtocol {
     var methodCacheBuckets: Pointer { get }
     var methodCacheProperties: Pointer { get }
     var dataVMAddrAndFastFlags: Pointer { get }
-
-    // This field is only present if this is a Swift object, ie, has the Swift
-    // fast bits set
-    var swiftClassFlags: UInt32 { get }
 }
 
 public enum ObjCClassLayoutField {
@@ -29,5 +25,4 @@ public enum ObjCClassLayoutField {
     case methodCacheBuckets
     case methodCacheProperties
     case dataVMAddrAndFastFlags
-    // case swiftClassFlags
 }
